@@ -68,6 +68,16 @@ void moveForward() {
   digitalWrite(IN4, LOW);
 }
 
+void moveBackward(uint16_t durationMs) {
+  stopMovement();
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  delay(durationMs);
+  stopMovement();
+}
+
 void rotateLeft(uint16_t durationMs) {
   stopMovement();
   digitalWrite(IN1, LOW);
@@ -88,17 +98,12 @@ void rotateRight(uint16_t durationMs) {
   stopMovement();
 }
 
-void scanAndNavigate() {
-  uint8_t tryCount = 0;
+void avoidObstacle() {
+  moveBackward(400);
+  rotateRight(400);
   
-  while (getDistance() < OBSTACLE_DISTANCE && tryCount < 3) {
-    rotateRight(300);
-    delay(100);
-    tryCount++;
-  }
-
   if (getDistance() < OBSTACLE_DISTANCE) {
-    rotateLeft(1000);
+    rotateLeft(800);
   }
 }
 
@@ -135,7 +140,7 @@ void loop() {
     extinguishFire();
   } else if (distance < OBSTACLE_DISTANCE) {
     stopMovement();
-    scanAndNavigate();
+    avoidObstacle();
   } else {
     moveForward();
   }
