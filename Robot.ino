@@ -1,7 +1,3 @@
-#include <Servo.h>
-
-Servo scannerServo;
-
 const uint8_t IN1 = 5;
 const uint8_t IN2 = 6;
 const uint8_t IN3 = 7;
@@ -12,7 +8,6 @@ const uint8_t ECHO_PIN = 4;
 const uint8_t RELAY_PIN = 10;
 const uint8_t ARM_PIN = 9;
 const uint8_t SMOKE_PIN = A0;
-const uint8_t SERVO_PIN = 11;
 
 const uint16_t SMOKE_THRESHOLD = 400;
 const uint8_t OBSTACLE_DISTANCE = 20;
@@ -32,10 +27,6 @@ void setup() {
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(ARM_PIN, OUTPUT);
   pinMode(SMOKE_PIN, INPUT);
-
-  scannerServo.attach(SERVO_PIN);
-  delay(500);
-  scannerServo.write(90);
 }
 
 uint16_t getDistance() {
@@ -46,7 +37,7 @@ uint16_t getDistance() {
   digitalWrite(TRIG_PIN, LOW);
 
   unsigned long duration = pulseIn(ECHO_PIN, HIGH, PULSE_TIMEOUT);
-  
+
   if (duration == 0) {
     return 999;
   }
@@ -98,47 +89,23 @@ void rotateRight(uint16_t durationMs) {
 }
 
 void scanAndNavigate() {
-  scannerServo.write(0);
-  delay(300);
-  uint16_t leftDistance = getDistance();
+  uint8_t tryCount = 0;
+  
+  while (getDistance() < OBSTACLE_DISTANCE && tryCount < 3) {
+    rotateRight(300);
+    delay(100);
+    tryCount++;
+  }
 
-  scannerServo.write(180);
-  delay(300);
-  uint16_t rightDistance = getDistance();
-
-  scannerServo.write(90);
-  delay(300);
-
-  if (leftDistance < OBSTACLE_DISTANCE && rightDistance < OBSTACLE_DISTANCE) {
-    rotateRight(800);
-  } else if (leftDistance > rightDistance) {
-    rotateLeft(400);
-  } else {
-    rotateRight(400);
+  if (getDistance() < OBSTACLE_DISTANCE) {
+    rotateLeft(1000);
   }
 }
 
 void extinguishFire() {
-  scannerServo.write(0);
-  delay(300);
-  uint16_t leftSmoke = getSmokeLevel();
-
-  scannerServo.write(180);
-  delay(300);
-  uint16_t rightSmoke = getSmokeLevel();
-
-  scannerServo.write(90);
-  delay(300);
-
-  if (leftSmoke > rightSmoke) {
-    rotateLeft(300);
-  } else {
-    rotateRight(300);
-  }
-
   digitalWrite(ARM_PIN, HIGH);
   digitalWrite(RELAY_PIN, HIGH);
-  
+
   delay(5000);
 
   digitalWrite(RELAY_PIN, LOW);
